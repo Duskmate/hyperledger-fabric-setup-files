@@ -1,41 +1,125 @@
 version: '2'
 
+networks:
+  fabric_test:
+    driver: bridge
+
 services:
+  # Orderer Service
   orderer.example.com:
     container_name: orderer.example.com
-    image: hyperledger/fabric-orderer
+    image: hyperledger/fabric-orderer:latest
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
     ports:
       - 7050:7050
-    environment:
-      - FABRIC_LOGGING_SPEC=INFO
     volumes:
-      - ./genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
+      - ./crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls:/var/hyperledger/orderer/tls
+    networks:
+      - fabric_test
 
+  # Peer0 for Bank
   peer0.bank.example.com:
     container_name: peer0.bank.example.com
-    image: hyperledger/fabric-peer
-    ports:
-      - 7051:7051
+    image: hyperledger/fabric-peer:latest
     environment:
       - CORE_PEER_ID=peer0.bank.example.com
+      - CORE_PEER_ADDRESS=peer0.bank.example.com:7051
       - CORE_PEER_LOCALMSPID=BankMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
     volumes:
-      - ./crypto-config:/etc/hyperledger/fabric
+      - ./crypto-config/peerOrganizations/bank.example.com/peers/peer0.bank.example.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/bank.example.com/peers/peer0.bank.example.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.bank.example.com:/var/hyperledger/production
+    ports:
+      - 7051:7051
+    command: peer node start
+    networks:
+      - fabric_test
 
+  # Peer0 for Investment Firm
   peer0.investmentfirm.example.com:
     container_name: peer0.investmentfirm.example.com
-    image: hyperledger/fabric-peer
-    ports:
-      - 8051:7051
+    image: hyperledger/fabric-peer:latest
     environment:
       - CORE_PEER_ID=peer0.investmentfirm.example.com
+      - CORE_PEER_ADDRESS=peer0.investmentfirm.example.com:8051
       - CORE_PEER_LOCALMSPID=InvestmentFirmMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    volumes:
+      - ./crypto-config/peerOrganizations/investmentfirm.example.com/peers/peer0.investmentfirm.example.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/investmentfirm.example.com/peers/peer0.investmentfirm.example.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.investmentfirm.example.com:/var/hyperledger/production
+    ports:
+      - 8051:7051
+    command: peer node start
+    networks:
+      - fabric_test
 
+  # Peer0 for Clearing House
   peer0.clearinghouse.example.com:
     container_name: peer0.clearinghouse.example.com
-    image: hyperledger/fabric-peer
-    ports:
-      - 9051:7051
+    image: hyperledger/fabric-peer:latest
     environment:
       - CORE_PEER_ID=peer0.clearinghouse.example.com
+      - CORE_PEER_ADDRESS=peer0.clearinghouse.example.com:9051
       - CORE_PEER_LOCALMSPID=ClearingHouseMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    volumes:
+      - ./crypto-config/peerOrganizations/clearinghouse.example.com/peers/peer0.clearinghouse.example.com/msp:/etc/hyperledger/fabric/msp
+      - ./crypto-config/peerOrganizations/clearinghouse.example.com/peers/peer0.clearinghouse.example.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.clearinghouse.example.com:/var/hyperledger/production
+    ports:
+      - 9051:7051
+    command: peer node start
+    networks:
+      - fabric_test
+
+  # CLI Container for Managing Network
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:latest
+    tty: true
+    stdin_open: true
+    environment:
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.bank.example.com:7051
+      - CORE_PEER_LOCALMSPID=BankMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/bank.example.com/users/Admin@bank.example.com/msp
+    volumes:
+      - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+      - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+    networks:
+      - fabric_test
+
+volumes:
+  peer0.bank.example.com:
+  peer0.investmentfirm.example.com:
+  peer0.clearinghouse.example.com:
