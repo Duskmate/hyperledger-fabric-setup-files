@@ -1,0 +1,25 @@
+OrdererOrgs:
+  - Name: OrdererOrg
+    Domain: example.com
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: Bank
+    Domain: bank.example.com
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+  - Name: InvestmentFirm
+    Domain: investmentfirm.example.com
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+  - Name: ClearingHouse
+    Domain: clearinghouse.example.com
+    Template:
+      Count: 2
+    Users:
+      Count: 1

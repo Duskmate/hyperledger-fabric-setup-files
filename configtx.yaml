@@ -1,0 +1,160 @@
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: crypto-config/ordererOrganizations/example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+
+  - &Bank
+    Name: BankMSP
+    ID: BankMSP
+    MSPDir: crypto-config/peerOrganizations/bank.example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('BankMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('BankMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('BankMSP.admin')"
+    AnchorPeers:
+      - Host: peer0.bank.com
+        Port: 7051
+
+  - &InvestmentFirm
+    Name: InvestmentFirmMSP
+    ID: InvestmentFirmMSP
+    MSPDir: crypto-config/peerOrganizations/investmentfirm.example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('InvestmentFirmMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('InvestmentFirmMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('InvestmentFirmMSP.admin')"
+    AnchorPeers:
+      - Host: peer0.investmentfirm.com
+        Port: 8051
+
+  - &ClearingHouse
+    Name: ClearingHouseMSP
+    ID: ClearingHouseMSP
+    MSPDir: crypto-config/peerOrganizations/clearinghouse.example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('ClearingHouseMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('ClearingHouseMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('ClearingHouseMSP.admin')"
+    AnchorPeers:
+      - Host: peer0.clearinghouse.com
+        Port: 9051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2.0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  EtcdRaft:
+    Consenters:
+      - Host: orderer.example.com
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+  Addresses:
+    - orderer.example.com:7050
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  FinancialNetworkChannel:
+    Consortium: SampleConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Bank
+        - *InvestmentFirm
+        - *ClearingHouse
+      Capabilities:
+        <<: *ApplicationCapabilities
+
+  FinancialNetworkGenesis:
+    <<: *ChannelDefaults
+    Capabilities:
+      <<: *ChannelCapabilities
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+      Capabilities:
+        <<: *OrdererCapabilities
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+          - *Bank
+          - *InvestmentFirm
+          - *ClearingHouse

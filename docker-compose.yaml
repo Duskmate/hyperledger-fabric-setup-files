@@ -1,0 +1,41 @@
+version: '2'
+
+services:
+  orderer.example.com:
+    container_name: orderer.example.com
+    image: hyperledger/fabric-orderer
+    ports:
+      - 7050:7050
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+    volumes:
+      - ./genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+
+  peer0.bank.example.com:
+    container_name: peer0.bank.example.com
+    image: hyperledger/fabric-peer
+    ports:
+      - 7051:7051
+    environment:
+      - CORE_PEER_ID=peer0.bank.example.com
+      - CORE_PEER_LOCALMSPID=BankMSP
+    volumes:
+      - ./crypto-config:/etc/hyperledger/fabric
+
+  peer0.investmentfirm.example.com:
+    container_name: peer0.investmentfirm.example.com
+    image: hyperledger/fabric-peer
+    ports:
+      - 8051:7051
+    environment:
+      - CORE_PEER_ID=peer0.investmentfirm.example.com
+      - CORE_PEER_LOCALMSPID=InvestmentFirmMSP
+
+  peer0.clearinghouse.example.com:
+    container_name: peer0.clearinghouse.example.com
+    image: hyperledger/fabric-peer
+    ports:
+      - 9051:7051
+    environment:
+      - CORE_PEER_ID=peer0.clearinghouse.example.com
+      - CORE_PEER_LOCALMSPID=ClearingHouseMSP
