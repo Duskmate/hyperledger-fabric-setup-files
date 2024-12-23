@@ -2,7 +2,7 @@
 
 # Variables
 REPO_URL="https://github.com/Duskmate/hyperledger-fabric-setup-files.git"
-TARGET_DIR="$(pwd)"
+TARGET_DIR="$(pwd)/hyperledger-network"
 EXPORT_PATH="$(pwd)/fabric-samples/bin"
 
 # Clone the repository
