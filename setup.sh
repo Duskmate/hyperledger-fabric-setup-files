@@ -30,9 +30,10 @@ else
     SHELL_RC="$HOME/.bashrc"
 fi
 
-# Update PATH
-if ! grep -q "export PATH=\./fabric-samples/bin:\$PATH" $SHELL_RC; then
-    echo "export PATH=./fabric-samples/bin:\$PATH" >> $SHELL_RC
+# Update PATH with absolute path
+ABSOLUTE_EXPORT_PATH="$(pwd)/fabric-samples/bin"
+if ! grep -q "export PATH=$ABSOLUTE_EXPORT_PATH:\$PATH" $SHELL_RC; then
+    echo "export PATH=$ABSOLUTE_EXPORT_PATH:\$PATH" >> $SHELL_RC
     echo "Path updated in $SHELL_RC"
 else
     echo "Path already set in $SHELL_RC"
